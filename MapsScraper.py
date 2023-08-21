@@ -38,7 +38,13 @@ class Map:
         except:
             print('error search')
 
-    def list_urls(self):
+    def scraping(self, url):
+        self.search(url)
+        pague = BeautifulSoup(self.driver.page_source, 'html.parser')
+        name = pague.find('h1', attrs={'class': 'DUwDvf lfPIob'})
+        print(name)
+
+    def list_webs(self):
         pague = BeautifulSoup(self.driver.page_source, 'html.parser')
         block = pague.find_all('a', attrs={'class': 'hfpxzc'})
         return block
@@ -72,7 +78,7 @@ class MapsScraperGUI:
                                 justification='left',
                                 def_col_width=12,
                                 num_rows=12,
-                                key='-TABLA_INI-',
+                                key='-TABLA-',
                                 font=['20'],
                                 vertical_scroll_only=False)],
                     [sg.ProgressBar(max_value=100,orientation='h',expand_x=True, key='-PBAR-', size=(20,15))],
@@ -96,16 +102,17 @@ class MapsScraperGUI:
 
             if event == '-LOAD-':
                 window['-LOAD-'].update(disabled=True)
-                infoMap = self.map.list_urls()
+                infoMap = self.map.list_webs()
                 lenInfoMap = len(infoMap)
                 window['-RESULTS-'].update(str(lenInfoMap))
-                n=0
+                load=0
+                list_urls = []
                 for i in infoMap:
-                    n+=1
+                    load+=1
                     urls = re.findall(self.map.patron, str(i))
-                    print(urls)
-                    window['-PBAR-'].update(current_count=round(n*(100/lenInfoMap)))
-                    print(f"current count: {round(n*(100/lenInfoMap))}")
+                    list_urls.append([urls[0], '', '', '', '', ''])
+                    window['-PBAR-'].update(current_count=round(load*(100/lenInfoMap)))
+                    window['-TABLA-'].update(values=list_urls)
 
                 window['-LOAD-'].update(disabled=False)
 
