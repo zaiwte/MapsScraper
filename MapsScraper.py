@@ -96,7 +96,7 @@ class MapsScraperGUI:
 
             if event == '-LOAD-':
                 window['-LOAD-'].update(disabled=True)
-                infoMap = self.map.get_info()
+                infoMap = self.map.list_urls()
                 lenInfoMap = len(infoMap)
                 window['-RESULTS-'].update(str(lenInfoMap))
                 n=0
