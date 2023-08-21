@@ -24,7 +24,7 @@ print(len(list(block2)))
 
 class Map:
     def __init__(self):
-        # url = "https://www.google.es/maps/search/clinica+dental+madrid+28001/@40.4193747,-3.6982363,16z?entry=ttu"
+        #url = "https://www.google.es/maps/search/clinica+dental+madrid+28001/@40.4193747,-3.6982363,16z?entry=ttu"
         self.patron = 'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+'
     def open_driver(self):
         try:
@@ -35,11 +35,10 @@ class Map:
     def search(self, text):
         try:
             self.driver.get(text)
-
         except:
             print('error search')
 
-    def get_info(self):
+    def list_urls(self):
         pague = BeautifulSoup(self.driver.page_source, 'html.parser')
         block = pague.find_all('a', attrs={'class': 'hfpxzc'})
         return block
