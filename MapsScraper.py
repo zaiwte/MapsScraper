@@ -39,10 +39,46 @@ class Map:
             print('error search')
 
     def scraping(self, url):
+        info = ['', '', '', '', '', '']
+        d_pague={}
         self.search(url)
         pague = BeautifulSoup(self.driver.page_source, 'html.parser')
-        name = pague.find('h1', attrs={'class': 'DUwDvf lfPIob'})
-        print(name)
+        list_find = [
+            ['name', 'h1', 'DUwDvf lfPIob'],
+            ['reviews', 'button', 'HHrUdb fontTitleSmall rqjGif'],
+            ['stars', 'div', 'fontDisplayLarge'],
+            ['location', 'div', 'Io6YTe fontBodyMedium kR99db'],
+            ['phone', 'div', 'Io6YTe fontBodyMedium kR99db'],
+            ['web', 'a', 'CsEnBe']
+        ]
+        for i in list_find:
+            try:
+                d_pague[i[0]]=pague.find(i[1], attrs={'class': i[2]}).text
+            except:
+                d_pague[i[0]]='nada'
+                print("error scraping")
+
+        #name = pague.find('h1', attrs={'class': 'DUwDvf lfPIob'}).text
+        #reviews = pague.find('button', {'class':'HHrUdb fontTitleSmall rqjGif'}).text
+        #stars = pague.find('div', attrs={'class': 'fontDisplayLarge'}).text
+        #location = pague.find('div', attrs={'class': 'Io6YTe fontBodyMedium kR99db'}).text
+        #phone = pague.find('div', attrs={'class': 'Io6YTe fontBodyMedium kR99db'}).text
+        #web = pague.find('a', attrs={'class': 'CsEnBe'}).text
+        #jslog="25991;metadata:WyIwYWhVS0V3ajd6SmJmeWZHQUF4VTJTVEFCSFNybEN4Z1E2VzRJR1NnQSJd
+
+        info = [
+            d_pague['name'],
+            d_pague['reviews'],
+            d_pague['stars'],
+            d_pague['location'],
+            d_pague['phone'],
+            d_pague['web']
+        ]
+
+        for i in pague.find_all('div', attrs={'class': 'Io6YTe fontBodyMedium kR99db'}):
+            print(i.text)
+
+        return info
 
     def list_webs(self):
         pague = BeautifulSoup(self.driver.page_source, 'html.parser')
@@ -110,10 +146,11 @@ class MapsScraperGUI:
                 for i in infoMap:
                     load+=1
                     urls = re.findall(self.map.patron, str(i))
-                    list_urls.append([urls[0], '', '', '', '', ''])
+                    list_urls.append(self.map.scraping(urls[0]))
                     window['-PBAR-'].update(current_count=round(load*(100/lenInfoMap)))
                     window['-TABLA-'].update(values=list_urls)
-
+                load = 0
+                window['-PBAR-'].update(current_count=0)
                 window['-LOAD-'].update(disabled=False)
 
             if event in (sg.WIN_CLOSED, 'Exit'):
