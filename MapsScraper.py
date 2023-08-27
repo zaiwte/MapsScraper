@@ -26,6 +26,7 @@ class Map:
     def __init__(self):
         #url = "https://www.google.es/maps/search/clinica+dental+madrid+28001/@40.4193747,-3.6982363,16z?entry=ttu"
         self.patron = 'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+'
+        self.patronPhone = '^\s*[+]\d*[ |-]*\d*[ |-]*\d*[ |-]*\d*[ |-]*\d*[ |-]*$'
     def open_driver(self):
         try:
             self.driver = webdriver.Chrome()
@@ -43,28 +44,29 @@ class Map:
         d_pague={}
         self.search(url)
         pague = BeautifulSoup(self.driver.page_source, 'html.parser')
+
         list_find = [
-            ['name', 'h1', 'DUwDvf lfPIob'],
-            ['reviews', 'button', 'HHrUdb fontTitleSmall rqjGif'],
-            ['stars', 'div', 'fontDisplayLarge'],
-            ['location', 'div', 'Io6YTe fontBodyMedium kR99db'],
-            ['phone', 'div', 'Io6YTe fontBodyMedium kR99db'],
-            ['web', 'a', 'CsEnBe']
+            ['name', 'h1', 'DUwDvf lfPIob', 'A'],
+            ['reviews', 'button', 'HHrUdb fontTitleSmall rqjGif', 'A'],
+            ['stars', 'div', 'fontDisplayLarge', 'A'],
+            ['location', 'button', 'CsEnBe','C'],
+            ['phone', 'a', 'lcr4fd S9kvJb','B'],
+            ['web', 'a', 'CsEnBe', 'A']
         ]
         for i in list_find:
             try:
-                d_pague[i[0]]=pague.find(i[1], attrs={'class': i[2]}).text
+                if i[3] == 'A':
+                    d_pague[i[0]] = pague.find(i[1], attrs={'class': i[2]}).text
+
+                elif i[3] == 'B':
+                    d_pague[i[0]] = pague.find(i[1], attrs={'class': i[2], 'data-value': 'Llamar al número de teléfono'})['href']
+
+                elif i[3] == 'C':
+                    d_pague[i[0]] = pague.find(i[1], attrs={'class': i[2]})['aria-label']
             except:
-                d_pague[i[0]]='nada'
+                d_pague[i[0]] = 'nada'
                 print("error scraping")
 
-        #name = pague.find('h1', attrs={'class': 'DUwDvf lfPIob'}).text
-        #reviews = pague.find('button', {'class':'HHrUdb fontTitleSmall rqjGif'}).text
-        #stars = pague.find('div', attrs={'class': 'fontDisplayLarge'}).text
-        #location = pague.find('div', attrs={'class': 'Io6YTe fontBodyMedium kR99db'}).text
-        #phone = pague.find('div', attrs={'class': 'Io6YTe fontBodyMedium kR99db'}).text
-        #web = pague.find('a', attrs={'class': 'CsEnBe'}).text
-        #jslog="25991;metadata:WyIwYWhVS0V3ajd6SmJmeWZHQUF4VTJTVEFCSFNybEN4Z1E2VzRJR1NnQSJd
 
         info = [
             d_pague['name'],
@@ -74,9 +76,8 @@ class Map:
             d_pague['phone'],
             d_pague['web']
         ]
-
-        for i in pague.find_all('div', attrs={'class': 'Io6YTe fontBodyMedium kR99db'}):
-            print(i.text)
+        #for i in pague.find_all('div', attrs={'class': 'Io6YTe fontBodyMedium kR99db'}):
+        #print([i.text for i in pague.find_all('div', attrs={'class': 'Io6YTe fontBodyMedium kR99db'})])
 
         return info
 
@@ -104,11 +105,19 @@ class MapsScraperGUI:
         self.values = [['', '', '', '', '', '']]
         self.headings = ['nombre', 'reviews', 'estrellas', 'ubicacion', 'telefono', 'web']
 
+    def tabs(self, name):
+        return [[sg.Table(values=[['', '']],
+                                headings=['nombres', name],
+                                auto_size_columns=False,
+                                justification='left',
+                                def_col_width=26,
+                                num_rows=12,
+                                key=f'-TABLA_{name}-',
+                                font=['20'],
+                                vertical_scroll_only=False)], [sg.Button(f'guardar {name}')]]
     def show(self):
-        layout = [
-                    [sg.Input(key='-INPUT-'), sg.Button("buscar", key='-SEARCH-'), sg.Button("abrir navegador", key='-OPENDRIVER-')],
-                    [sg.Text('resultados:'), sg.Input(size=(8,0), key='-RESULTS-')],
-                    [sg.Table(values=self.values,
+
+        tab_all = [[sg.Table(values=self.values,
                                 headings=self.headings,
                                 auto_size_columns=False,
                                 justification='left',
@@ -116,7 +125,26 @@ class MapsScraperGUI:
                                 num_rows=12,
                                 key='-TABLA-',
                                 font=['20'],
-                                vertical_scroll_only=False)],
+                                vertical_scroll_only=False)], [sg.Button('guardar todo')]]
+
+        tab_reviews = self.tabs('reviews')
+        tab_estrellas = self.tabs('estrellas')
+        tab_ubicacion = self.tabs('ubicacion')
+        tab_telefono = self.tabs('telefono')
+        tab_web = self.tabs('web')
+
+        layout = [
+                    [sg.Input(key='-INPUT-'), sg.Button("buscar", key='-SEARCH-'), sg.Button("abrir navegador", key='-OPENDRIVER-')],
+                    [sg.Text('resultados:'), sg.Input(size=(8,0), key='-RESULTS-')],
+                    [sg.TabGroup([[
+                            sg.Tab('todos', tab_all),
+                            sg.Tab('reviews', tab_reviews),
+                            sg.Tab('estrellas', tab_estrellas),
+                            sg.Tab('ubicacion', tab_ubicacion),
+                            sg.Tab('telefono', tab_telefono),
+                            sg.Tab('web', tab_web)
+
+                    ]])],
                     [sg.ProgressBar(max_value=100,orientation='h',expand_x=True, key='-PBAR-', size=(20,15))],
                     [sg.Button("cargar", key='-LOAD-', size=(20,0))]
                  ]
